@@ -387,21 +387,4 @@ public:
     }
 };
 
-class karatsuba {
-
-    template<class Itr>
-    static constexpr auto mul_impl(Itr dest, Itr first1, Itr last1, Itr first2, Itr last2) noexcept {
-        Itr org_dest = dest;
-
-    }
-
-    template<unsigned int Bits>
-    static constexpr auto mul(int_representation<Bits>& dest, const int_representation<Bits>& a, const int_representation<Bits>& b) noexcept
-    -> void
-    {
-
-    }
-
-};
-
 }
