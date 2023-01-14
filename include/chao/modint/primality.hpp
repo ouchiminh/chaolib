@@ -11,7 +11,7 @@ template<class T>
 T mod_mul(T,T,T);
 
 template<class Rnd, class Int>
-bool is_prime_number(Int&& n, Rnd random = Rnd{}, int k = 100) noexcept {
+bool is_prime_number(Int&& n, Rnd random = Rnd{}, int k = 20) noexcept {
     Int d;
     n = n < 0 ? -n : n;
     if(n == 2) return true;

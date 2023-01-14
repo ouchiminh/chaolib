@@ -265,15 +265,31 @@ public:
         constexpr unsigned int half_bit_width = sizeof(Half) * CHAR_BIT;
         const Digit ah[] = {static_cast<Half>(a), static_cast<Half>(a >> half_bit_width)};
         const Digit bh[] = {static_cast<Half>(b), static_cast<Half>(b >> half_bit_width)};
+
         dest = a * b;
         Digit oz = ah[0] * bh[1];
         const Digit carry = impl_base::plus(oz, ah[1] * bh[0]);
         return ah[1] * bh[1] + (oz >> half_bit_width) + ((Half)oz > (dest >> half_bit_width)) + (carry << half_bit_width);
         // dest = ah[0] * bh[0];
         // auto H = ah[1] * bh[1];
-        // auto z = (ah[1] + ah[0]) * (bh[1] + bh[0]) - dest - H;
-        // dest += z << half_bit_width;
-        // return H + (z >> half_bit_width);
+        // Digit z = H + dest - (ah[1] - ah[0]) * (bh[1] - bh[0]);
+        // return H + (z >> half_bit_width)
+        //     + impl_base::plus(dest, z << half_bit_width);
+    }
+
+    template<int N, class Itr, class CItr>
+    static constexpr auto mul(Itr dest, CItr a, CItr b) noexcept
+    -> std::enable_if_t<std::is_same_v<typename std::iterator_traits<Itr>::iterator_category, std::random_access_iterator_tag>, void>
+    {
+        typedef typename std::iterator_traits<Itr>::value_type int_type;
+        for(auto i = 0u; i < N; ++i) {
+            for(auto j = 0u; j <= i; ++j) {
+                auto k = i - j;
+                int_type digit;
+                impl_base::plus(*(dest + i + 1), mul(digit, *(a + k), *(b + j)));
+                impl_base::plus(*(dest + i), digit);
+            }
+        }
     }
 
     template<unsigned int Bits, unsigned int Bits1, unsigned int Bits2>

@@ -1,0 +1,4 @@
+testall
+*.exe
+*.out
+*.txt

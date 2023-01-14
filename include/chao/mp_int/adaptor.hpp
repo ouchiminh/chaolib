@@ -17,7 +17,9 @@ public:
     {}
     random_adaptor() = default;
 
-    auto operator()() noexcept {
+    auto operator()() noexcept
+    -> mp_int<sign::mp_unsigned, BitWidth>
+    {
         constexpr auto org_rnd_bit_size = sizeof(std::invoke_result_t<Rnd>) * CHAR_BIT;
         mp_int<sign::mp_unsigned, BitWidth> res(0);
         for(auto i = 0u; i < BitWidth / org_rnd_bit_size; ++i) {

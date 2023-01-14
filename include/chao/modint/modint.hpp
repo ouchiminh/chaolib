@@ -22,6 +22,8 @@ concept derived_mod_expr = std::is_base_of_v<mod_expr_base, std::remove_cvref_t<
 template<class Mod>
 class modint : public detail::mod_expr_base {
 public:
+    template<class M>
+    friend class modint;
     using mod_type = std::remove_cvref_t<Mod>;
     static constexpr unsigned int bit_length = mod_type::bit_length;
     using int_type = mp_int<sign::mp_signed, bit_length>;
@@ -42,8 +44,10 @@ public:
     }
     constexpr int_type get() const noexcept { return (int_type)*this; }
 
-    constexpr void evaluate(modint& dest) const noexcept {
-        dest = *this;
+    template<class M>
+    constexpr void evaluate(modint<M>& dest) const noexcept {
+        assert(mod.compatible_with(dest.mod) == compatibility::compatible);
+        dest.mrep_ = mrep_;
     }
     constexpr const modint& evaluate() const noexcept { return *this; }
 

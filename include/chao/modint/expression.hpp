@@ -8,7 +8,7 @@
 namespace chao::detail {
 
 
-#define DEFINE_MOD_EXPR(expr_name, operator) \
+#define DEFINE_MOD_EXPR(expr_name, op) \
 template<detail::derived_mod_expr ME, detail::derived_mod_expr MF>\
 class expr_name : public detail::mod_expr_base {\
 public:\
@@ -31,13 +31,14 @@ public:\
 \
     constexpr modint<mod_type> evaluate() const noexcept {\
         assert(exp1_.mod.compatible_with(exp2_.mod) == compatibility::compatible);\
-        auto result = exp1_.evaluate();\
-        return result operator##= exp2_.evaluate();\
+        mod_int_type result = exp1_.evaluate();\
+        return result op##= exp2_.evaluate();\
     }\
-\
-    constexpr void evaluate(modint<mod_type>& dest) const noexcept {\
+    template<class M>\
+    constexpr void evaluate(modint<M>& dest) const noexcept {\
+        assert(exp1_.mod.compatible_with(exp2_.mod) == compatibility::compatible);\
         exp1_.evaluate(dest);\
-        dest operator##= exp2_;\
+        dest op##= exp2_;\
     }\
 \
 private:\

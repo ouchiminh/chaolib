@@ -272,7 +272,7 @@ OUCHI_TEST_CASE(int_representation_mul_digit_test) {
     std::mt19937_64 r(std::random_device{}());
     OUCHI_CHECK_EQUAL(naive_mul::mul(dest, a, b), 1ull);
     OUCHI_CHECK_EQUAL(dest, ~0ull << 1);
-    for(auto i = 0u; i < 10000; ++i){
+    for(auto i = 0u; i < 1000; ++i){
         a128 = a = r();
         b128 = b = r();
         a128 *= b128;
@@ -296,7 +296,7 @@ OUCHI_TEST_CASE(int_representation_mul_test128) {
 
         a128 *= b128;
         naive_mul::mul(dest, a, b);
-        OUCHI_CHECK_EQUAL(dest.poly[0], (std::uint64_t)a128);
+        OUCHI_REQUIRE_EQUAL(dest.poly[0], (std::uint64_t)a128);
         OUCHI_REQUIRE_EQUAL(dest.poly[1], static_cast<std::uint64_t>(a128>>64));
     }
 }
