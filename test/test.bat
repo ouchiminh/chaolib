@@ -1,2 +1,2 @@
 @echo off
-clang++ main.cpp -Wall -Wextra -I .\ouchitest\include\ -I ..\include\ -std=c++20 -O3 -o testall.exe && echo ----- && .\testall.exe
+clang++ main.cpp -pedantic -Wall -Wextra -I .\ouchitest\include\ -I ..\include\ -std=c++20 -O3 -o testall.exe -fconstexpr-steps=2109999999 && echo ----- && .\testall.exe

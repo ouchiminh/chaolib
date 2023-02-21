@@ -50,7 +50,7 @@ OUCHI_TEST_CASE(test_io_mp_int) {
     ss >> u128;
     result << u128;
     OUCHI_REQUIRE_EQUAL(u128, 12345);
-    OUCHI_CHECK_THROW(ss >> u128, std::invalid_argument);
+    OUCHI_CHECK_THROW(ss >> u128, std::invalid_argument&);
 
     OUCHI_REQUIRE_EQUAL(result.str(), "123456-112345");
 }

@@ -30,13 +30,11 @@ public:\
     }\
 \
     constexpr modint<mod_type> evaluate() const noexcept {\
-        assert(exp1_.mod.compatible_with(exp2_.mod) == compatibility::compatible);\
         mod_int_type result = exp1_.evaluate();\
         return result op##= exp2_.evaluate();\
     }\
     template<class M>\
     constexpr void evaluate(modint<M>& dest) const noexcept {\
-        assert(exp1_.mod.compatible_with(exp2_.mod) == compatibility::compatible);\
         exp1_.evaluate(dest);\
         dest op##= exp2_;\
     }\

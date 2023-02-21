@@ -265,7 +265,7 @@ OUCHI_TEST_CASE(int_representation_minus_test256)
     impl_base::plus(a,c);
 }
 
-OUCHI_TEST_CASE(int_representation_mul_digit_test) {
+OUCHI_TEST_CASE(int_representation_karatsuba_digit_test128) {
     using namespace chao::detail;
     std::uint64_t a = ~0ull, b = 2, dest;
     unsigned __int128 a128, b128;
@@ -280,7 +280,6 @@ OUCHI_TEST_CASE(int_representation_mul_digit_test) {
         OUCHI_REQUIRE_EQUAL(dest, static_cast<std::uint64_t>(a128));
     }
 }
-
 OUCHI_TEST_CASE(int_representation_mul_test128) {
     using namespace chao::detail;
     int_representation<128> a, b, dest;
@@ -296,6 +295,25 @@ OUCHI_TEST_CASE(int_representation_mul_test128) {
 
         a128 *= b128;
         naive_mul::mul(dest, a, b);
+        OUCHI_REQUIRE_EQUAL(dest.poly[0], (std::uint64_t)a128);
+        OUCHI_REQUIRE_EQUAL(dest.poly[1], static_cast<std::uint64_t>(a128>>64));
+    }
+}
+OUCHI_TEST_CASE(int_representation_karatsuba_test128) {
+    using namespace chao::detail;
+    int_representation<128> a, b, dest;
+    unsigned __int128 a128, b128;
+    std::mt19937_64 r(std::random_device{}());
+    for(auto i = 0u; i < 1000; ++i){
+        a128 = a.poly[0] = r();
+        a.poly[1] = r();
+        b128 = b.poly[0] = r();
+        b.poly[1] = r();
+        a128 += (__int128)a.poly[1] << 64;
+        b128 += (__int128)b.poly[1] << 64;
+
+        a128 *= b128;
+        karatsuba::mul(dest, a, b);
         OUCHI_REQUIRE_EQUAL(dest.poly[0], (std::uint64_t)a128);
         OUCHI_REQUIRE_EQUAL(dest.poly[1], static_cast<std::uint64_t>(a128>>64));
     }
@@ -346,6 +364,51 @@ OUCHI_TEST_CASE(signed_int_representation_mul_test128) {
     }
 }
 
+OUCHI_TEST_CASE(signed_int_representation_karatsuba_test128) {
+    using namespace chao::detail;
+    int_representation<128> a, b, dest;
+    signed __int128 a128, b128;
+    std::mt19937_64 r(std::random_device{}());
+    for(auto i = 0u; i < 0xFFFF; ++i){
+        a128 = a.poly[0] = r();
+        a.poly[1] = r();
+        b128 = b.poly[0] = r();
+        b.poly[1] = r();
+        a128 += (__int128)a.poly[1] << 64;
+        b128 += (__int128)b.poly[1] << 64;
+
+        a128 *= b128;
+        karatsuba::mul(dest, a, b);
+        OUCHI_CHECK_EQUAL(dest.poly[0], (std::uint64_t)a128);
+        OUCHI_REQUIRE_EQUAL(dest.poly[1], static_cast<std::uint64_t>(a128>>64));
+    }
+    for(auto i = 0u; i < 0xFFFF; ++i){
+        a128 = a.poly[0] = r();
+        a.poly[1] = r() | (1LL << 63);
+        b128 = b.poly[0] = r();
+        b.poly[1] = r() | (1LL << 63);
+        a128 += (__int128)a.poly[1] << 64;
+        b128 += (__int128)b.poly[1] << 64;
+
+        a128 *= b128;
+        karatsuba::mul(dest, a, b);
+        OUCHI_CHECK_EQUAL(dest.poly[0], (std::uint64_t)a128);
+        OUCHI_REQUIRE_EQUAL(dest.poly[1], static_cast<std::uint64_t>(a128>>64));
+    }
+    for(auto i = 0u; i < 0xFFFF; ++i){
+        a128 = a.poly[0] = r();
+        a.poly[1] = r();
+        b128 = b.poly[0] = r();
+        b.poly[1] = r() | (1LL << 63);
+        a128 |= (__int128)a.poly[1] << 64;
+        b128 |= (__int128)b.poly[1] << 64;
+
+        a128 *= b128;
+        karatsuba::mul(dest, a, b);
+        OUCHI_CHECK_EQUAL(dest.poly[0], (std::uint64_t)a128);
+        OUCHI_REQUIRE_EQUAL(dest.poly[1], static_cast<std::uint64_t>(a128>>64));
+    }
+}
 #if 0
 OUCHI_TEST_CASE(mpint_mul_benchmark128) {
     using namespace chao::detail;

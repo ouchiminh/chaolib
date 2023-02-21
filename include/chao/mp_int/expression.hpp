@@ -216,11 +216,11 @@ public:
     {}
     template<sign Sign, unsigned int BW>
     constexpr void evaluate(mp_int<Sign, BW>& dest) const noexcept {
-        detail::naive_mul::mul(dest.value_, expr_to_mp_int(e1_).value_, expr_to_mp_int(e2_).value_);
+        detail::karatsuba::mul(dest.value_, expr_to_mp_int(e1_).value_, expr_to_mp_int(e2_).value_);
     }
     constexpr mp_int<sign_value, bit_length> evaluate() const noexcept {
         mp_int<sign_value, bit_length> r;
-        detail::naive_mul::mul(r.value_, expr_to_mp_int(e1_).value_, expr_to_mp_int(e2_).value_);
+        detail::karatsuba::mul(r.value_, expr_to_mp_int(e1_).value_, expr_to_mp_int(e2_).value_);
         return r;
     }
 };

@@ -89,7 +89,7 @@ OUCHI_TEST_CASE(test_bitop_expr_tmpl128) {
     }
 }
 
-OUCHI_TEST_CASE(test_shift_tmpl){
+OUCHI_TEST_CASE(test_shift_tmpl128){
     using namespace chao;
     mp_int<sign::mp_unsigned, 128> i, j, r;
     unsigned __int128 I, J, R;
@@ -117,6 +117,52 @@ OUCHI_TEST_CASE(test_shift_tmpl){
         R = J << W;
         OUCHI_REQUIRE_EQUAL(r.value_.poly[0], (std::uint64_t)R);
         OUCHI_REQUIRE_EQUAL(r.value_.poly[1], (std::uint64_t)(R >> 64));
+    }
+}
+
+OUCHI_TEST_CASE(test_shiftl_tmpl512){
+    using namespace chao;
+    typedef mp_int<sign::mp_unsigned, 512> umpint;
+    typedef mp_int<sign::mp_signed, 512> mpint;
+    umpint r, s;
+    const auto seed = std::random_device{}();
+    chao::random_adaptor<std::mt19937_64, 512> rnd(seed);
+
+    auto in_range = [](int a, int first, int last) -> bool{
+        return (a >= first) && (a < last);
+    };
+
+    for(int k = 0; k < 512; ++k) {
+        r = 1;
+        s = r << k;
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[0], !in_range(k,0,64) ? 0 : 1ULL << (k-0));
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[1], !in_range(k,64,128) ? 0 : 1ULL << (k-64));
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[2], !in_range(k,128,192) ? 0 : 1ULL << (k-128));
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[3], !in_range(k,192,256) ? 0 : 1ULL << (k-192));
+
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[4], !in_range(k,256,320) ? 0 : 1ULL << (k-256));
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[5], !in_range(k,320,384) ? 0 : 1ULL << (k-320));
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[6], !in_range(k,384,448) ? 0 : 1ULL << (k-384));
+        OUCHI_REQUIRE_EQUAL(s.value_.poly[7], !in_range(k,448,512) ? 0 : 1ULL << (k-448));
+    }
+
+    {
+        constexpr auto w = 100;
+        constexpr mpint c = mpint(1) << w;
+        mpint d = mpint(1) << w;
+        OUCHI_CHECK_EQUAL(c, d);
+    }
+    {
+        constexpr auto w = 64;
+        constexpr mpint c = mpint(1) << w;
+        mpint d = mpint(1) << w;
+        OUCHI_CHECK_EQUAL(c, d);
+    }
+    {
+        constexpr auto w = 63;
+        constexpr mpint c = mpint(1) << w;
+        mpint d = mpint(1) << w;
+        OUCHI_REQUIRE_EQUAL(c, d);
     }
 }
 
@@ -149,39 +195,49 @@ OUCHI_TEST_CASE(test_add_expr_tmpl) {
 }
 OUCHI_TEST_CASE(test_sub_expr_tmpl) {
     using namespace chao;
-    mp_int<sign::mp_signed, 128> i, j;
-    i = 4; j = 5;
-    mp_int<sign::mp_signed, 128> r;
+    constexpr mp_int<sign::mp_signed, 128> i = 4, j = 5;
     mp_int<sign::mp_signed, 128> R = 1;
-    r = j - i;
-    OUCHI_REQUIRE_TRUE(r == R);
-    r = j - i - j;
-    R = -4;
-    OUCHI_REQUIRE_TRUE(r == R);
-    r = (j - i) - (j - i);
-    R = 0;
-    OUCHI_REQUIRE_TRUE(r == R);
-    r = r - r;
-    R = 0;
-    OUCHI_REQUIRE_EQUAL(r.value_.poly[0], R.value_.poly[0]);
+    {
+        constexpr mp_int<sign::mp_signed, 128> r = j - i;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        constexpr mp_int<sign::mp_signed, 128> r = j - i - j;
+        R = -4;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        constexpr mp_int<sign::mp_signed, 128> r = (j - i) - (j - i);
+        R = 0;
+        OUCHI_REQUIRE_TRUE(r == R);
+        R = r - r;
+        OUCHI_REQUIRE_EQUAL(R, 0);
+    }
 }
 OUCHI_TEST_CASE(test_mul_expr_tmpl) {
     using namespace chao;
-    mp_int<sign::mp_signed, 128> i, j;
-    i = 4; j = 5;
-    mp_int<sign::mp_signed, 128> r;
+    constexpr mp_int<sign::mp_signed, 128> i = 4, j = 5;
     mp_int<sign::mp_signed, 128> R = 20;
-    r = j * i;
-    OUCHI_REQUIRE_TRUE(r == R);
-    r = j * i * j;
-    R = 100;
-    OUCHI_REQUIRE_TRUE(r == R);
-    r = (j * i) * (j * i);
-    R = 400;
-    OUCHI_REQUIRE_TRUE(r == R);
-    r *= r;
-    R = 160000;
-    OUCHI_REQUIRE_EQUAL(r.value_.poly[0], R.value_.poly[0]);
+    {
+        constexpr mp_int<sign::mp_signed, 128> r = j * i;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        constexpr mp_int<sign::mp_signed, 128> r = j * i * j;
+        R = 100;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        constexpr mp_int<sign::mp_signed, 128> r = (j * i) * (j * i);
+        R = 400;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        mp_int<sign::mp_signed, 128> r = 400;
+        r *= r;
+        R = 160000;
+        OUCHI_REQUIRE_EQUAL(r.value_.poly[0], R.value_.poly[0]);
+    }
 }
 OUCHI_TEST_CASE(test_mul_expr_tmpl192) {
     using namespace chao;
@@ -203,19 +259,23 @@ OUCHI_TEST_CASE(test_mul_expr_tmpl192) {
 }
 OUCHI_TEST_CASE(test_div_expr_tmpl) {
     using namespace chao;
-    mp_int<sign::mp_signed, 128> i, j;
-    i = 3; j = 8;
-    mp_int<sign::mp_signed, 128> r;
     mp_int<sign::mp_signed, 128> R = 2;
-    r = j / i;
-    OUCHI_REQUIRE_TRUE(r == R);
-    i = -3; j = -8;
-    r = j / i;
-    OUCHI_REQUIRE_TRUE(r == R);
-    i = -2; j = 8;
-    r = j / i;
-    R = -4;
-    OUCHI_REQUIRE_TRUE(r == R);
+    {
+        constexpr mp_int<sign::mp_signed, 128> i = 3, j = 8;
+        constexpr mp_int<sign::mp_signed, 128> r = j / i;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        constexpr mp_int<sign::mp_signed, 128> i = -3, j = -8;
+        constexpr mp_int<sign::mp_signed, 128> r = j / i;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
+    {
+        constexpr mp_int<sign::mp_signed, 128> i = -2, j = 8;
+        constexpr mp_int<sign::mp_signed, 128> r = j / i;
+        R = -4;
+        OUCHI_REQUIRE_TRUE(r == R);
+    }
 }
 OUCHI_TEST_CASE(test_mod_expr_tmpl) {
     using namespace chao;

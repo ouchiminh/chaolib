@@ -19,6 +19,9 @@ constexpr int256_t operator"" _i256(const char* number_str) noexcept {
 constexpr int384_t operator"" _i384(const char* number_str) noexcept {
     return stoi<384>(number_str);
 }
+constexpr int384_t operator"" _i512(const char* number_str) noexcept {
+    return stoi<512>(number_str);
+}
 
 constexpr uint128_t operator"" _u128(const char* number_str) noexcept {
     return stoul<128>(number_str);
@@ -31,6 +34,9 @@ constexpr uint256_t operator"" _u256(const char* number_str) noexcept {
 }
 constexpr uint384_t operator"" _u384(const char* number_str) noexcept {
     return stoul<384>(number_str);
+}
+constexpr uint384_t operator"" _u512(const char* number_str) noexcept {
+    return stoul<512>(number_str);
 }
 
 }}}

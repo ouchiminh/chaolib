@@ -38,7 +38,7 @@ constexpr int digit(char d, int base) noexcept {
 template<unsigned int BitWidth = 128>
 [[nodiscard]]
 constexpr mp_int<sign::mp_unsigned, BitWidth> stoul(std::string_view str, size_t* const idx = nullptr, int base = 10) {
-    if(str.size() == 0) throw std::invalid_argument("string must have length longer than 1.");
+    if(str.size() == 0) throw std::invalid_argument("string must have length longer than 0.");
     mp_int<sign::mp_unsigned, BitWidth> result = 0;
     if(base == 0) {
         base = detail::detect_base(str);

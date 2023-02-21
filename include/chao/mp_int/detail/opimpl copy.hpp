@@ -17,7 +17,8 @@ namespace chao::detail{
 
 class impl_base {
 public:
-    typedef typename int_representation<64>::coeff_type int_type;
+    typedef typename int_representation<64>::coeff_type _int_type;
+
     /// @brief 整数同士の足し算．a += bとなり，繰り上がりが返される．
     /// @tparam Digit 整数型(符号なし基本型)
     /// @param a 左辺．
@@ -31,15 +32,15 @@ public:
         return a < b;
     }
     template<std::random_access_iterator Itr, class Digit>
-    static constexpr auto plus(Itr dest, int destlen, Digit b, Digit c = 0u) noexcept
+    static constexpr auto plus(Itr dest, int destlen, Digit b) noexcept
     -> std::enable_if_t<std::is_fundamental_v<Digit> && std::is_unsigned_v<Digit> && std::is_same_v<typename std::iterator_traits<Itr>::value_type, Digit>, bool>
     {
-        if(destlen > 0)
-            c += plus(*dest++, b);
-        for(int i = 1; i < destlen && c; ++i) {
-            c = plus(*dest++, c);
+        bool cr = false;
+        for(int i = 0; i < destlen; ++i) {
+            b = plus(*dest, b);
+            std::advance(dest, 1);
         }
-        return c;
+        return cr;
     }
     template<unsigned int Bits, std::integral Digit = typename int_representation<Bits>::coeff_type>
     static constexpr auto plus(int_representation<Bits>& a, Digit b, unsigned int offset_in_coeff = 0) noexcept
@@ -119,12 +120,12 @@ public:
     }
 
     template<sign Sign, unsigned int Len1, unsigned int Len2>
-    static constexpr auto cmp(const int_type* a, const int_type* b) noexcept
+    static constexpr auto cmp(const _int_type* a, const _int_type* b) noexcept
     -> std::enable_if_t<(Len1 >= Len2), int>
     {
-        auto msb = [](const int_type *t, unsigned int len)
+        auto msb = [](const _int_type *t, unsigned int len)
         {
-            return t[len - 1] >> (sizeof(int_type) * 8 - 1);
+            return t[len - 1] >> (sizeof(_int_type) * 8 - 1);
         };
         if ((Sign == sign::mp_signed) && (msb(a, Len1) != msb(b, Len2)))
         {
@@ -145,7 +146,7 @@ public:
     }
 
     template<sign Sign, unsigned int Len1, unsigned int Len2>
-    static constexpr auto cmp(const int_type* a, const int_type* b) noexcept
+    static constexpr auto cmp(const _int_type* a, const _int_type* b) noexcept
     -> std::enable_if_t<(Len2 > Len1), int>
     {
         -cmp<Sign, Len2, Len1>(b, a);
@@ -305,37 +306,14 @@ public:
     -> std::enable_if_t<std::is_same_v<typename std::iterator_traits<Itr>::value_type, typename std::iterator_traits<CItr>::value_type>, void>
     {
         typedef typename std::iterator_traits<Itr>::value_type int_type;
-        int_type digit, c;
+        int_type digit;
         std::fill_n(dest, DestLen, (int_type)0);
-        // for(auto i = 0; i < std::min(DestLen, 2 * MulLen); ++i) {
-        //     for(auto j = 0; j <= std::min(i, MulLen - 1); ++j) {
-        //         auto k = i - j;
-        //         // impl_base::plus((dest + i + 1), DestLen - i - 1, mul(digit, *(a + k), *(b + j)));
-        //         // impl_base::plus((dest + i), DestLen - i, digit);
-        //         c = mul(digit, *(a + k), *(b + j));
-        //         impl_base::plus(dest + i, DestLen - i, digit, c);
-        //     }
-        // }
-
-        // auto inner_loop_block = [dest, a, b, &c, &digit]<int I, int J>(std::integral_constant<int, I>, std::integral_constant<int, J>) {
-        //     (c = mul(digit, *(a + I), *(b + J)),
-        //     impl_base::plus(dest + I + J, DestLen - I - J, digit, c));
-        // };
-        // auto unroll_inner_loop = [&inner_loop_block]<int I, int ...J>(std::integral_constant<int, I>, std::integer_sequence<int, J...>) mutable {
-        //     inner_loop_block(std::integral_constant<int, I>{}, std::integral_constant<int, J>{}), ...;
-        // };
-        // auto unroll_outer_loop = [&unroll_inner_loop]<int ...I>(std::integer_sequence<int, I...>) {
-        //     unroll_inner_loop(std::integral_constant<int, I>{}, std::make_integer_sequence<int, std::min(MulLen, 1 + DestLen - I)>{}), ...;
-        // };
-        // unroll_outer_loop(std::make_integer_sequence<int, std::min(MulLen, DestLen)>{});
-
-        for(int i = 0; i < std::min(MulLen, DestLen); ++i) {
-            for(int j = 0; j <= std::min(MulLen - 1, DestLen - i); ++j) {
-                // if(i + j > DestLen) break;
-                c = mul(digit, *a, *(b + j));
-                impl_base::plus(dest + i + j, DestLen - i - j, digit, c);
+        for(auto i = 0; i < std::min(DestLen, 2 * MulLen); ++i) {
+            for(auto j = 0; j <= std::min(i, MulLen - 1); ++j) {
+                auto k = i - j;
+                impl_base::plus((dest + i + 1), DestLen - i - 1, mul(digit, *(a + k), *(b + j)));
+                impl_base::plus((dest + i), DestLen - i, digit);
             }
-            ++a;
         }
     }
 
@@ -501,7 +479,7 @@ public:
             dest[i] += ~src[i];
             cr |= (dest[i] < ~src[i]);
         }
-        for(; i < DestLen && !cr; ++i) {
+        for(; i < DestLen; ++i) {
             dest[i] += cr;
             cr = (dest[i] < cr);
             dest[i] += ~(int_type)0;
@@ -523,7 +501,7 @@ public:
             return true;
         }
         return false;
-        // auto cmp = impl_base::cmp<sign::mp_unsigned, DestLen, SrcLen>(dest, src);
+        // auto cmp = impl_base::cmp<DestLen, SrcLen>(dest, src);
         // if(cmp == 1) {
         //     sub<DestLen, SrcLen>(dest, src);
         // } else if(cmp == 0) {
@@ -534,7 +512,6 @@ public:
         //     int i;
         //     for(i = 0; i < mi; ++i) {
         //         dest[i] = ~dest[i];
-        //         dest[i] += cr;
         //         cr = (dest[i] < cr);
         //         dest[i] += src[i];
         //         cr |= (dest[i] < ~src[i]);
@@ -544,50 +521,40 @@ public:
         //         dest[i] += cr;
         //         cr = (dest[i] < cr);
         //     }
-        //     return true;
-        // }
-        // return false;
+        //     return cr + ~(int_type)0;
     }
 
     template<int DestLen, int SrcLen>
-    static inline auto kmul(int_type* dest, const int_type* a, const int_type* b) noexcept
+    static auto kmul(int_type* dest, const int_type* a, const int_type* b) noexcept
     -> std::enable_if_t<(SrcLen > 0) && ((SrcLen >> std::countr_zero((unsigned int)SrcLen)) <= karatsuba_threashold), void>
     {
         constexpr auto halfw = SrcLen / 2;
-        // if constexpr (SrcLen == 1) {
-        //     int_type buffer;
-        //     buffer = naive_mul::mul(dest[0], *a, *b);
-        //     if constexpr (DestLen >= 2) {
-        //         dest[1] = buffer;
-        //         std::fill_n(dest + 2, DestLen > 2 ? DestLen - 2 : 0, 0);
-        //     }
-        //     return;
-        // } 
         if constexpr (SrcLen <= karatsuba_threashold) {
             naive_mul::mul<DestLen, SrcLen>(dest, a, b);
             return;
         }
         else {
             // karatsuba algorithm
-            int_type z0[SrcLen];
-            int_type z2[SrcLen];
-            int_type z1[SrcLen];
-            bool overflow;
+            int_type z0[SrcLen] = {};
+            int_type z2[SrcLen] = {};
+            int_type *z1 = dest + halfw;
+            bool ofx, ofy;
+            std::fill_n(dest, DestLen, 0);
 
             kmul<SrcLen, halfw>(z0, a, b);
             kmul<SrcLen, halfw>(z2, a + halfw, b + halfw);
             {
-                int_type x0_x1[halfw], y1_y0[halfw];
+                int_type x0_x1[halfw] = {}, y1_y0[halfw] = {};
                 std::copy(a, a + halfw, x0_x1);
                 std::copy(b + halfw, b + SrcLen,  y1_y0);
-                overflow = diff<halfw, halfw>(x0_x1, a + halfw);
-                overflow ^= diff<halfw, halfw>(y1_y0, b);
-                kmul<SrcLen, halfw>(z1, x0_x1, y1_y0);
+                ofx = diff<halfw, halfw>(x0_x1, a + halfw);
+                ofy = diff<halfw, halfw>(y1_y0, b);
+                kmul<DestLen - halfw, halfw>(z1, x0_x1, y1_y0);
             }
-            std::copy(z0, z0 + std::min(SrcLen, DestLen), dest);
-            std::fill_n(dest + SrcLen, DestLen > SrcLen ? DestLen - SrcLen : 0, 0);
+            // std::copy(z0, z0 + std::min(SrcLen, DestLen), dest);
+            // std::fill_n(dest + SrcLen, DestLen > SrcLen ? DestLen - SrcLen : 0, 0);
             add<DestLen - SrcLen, SrcLen>(dest + SrcLen, z2);
-            if (overflow) {
+            if (ofx ^ ofy) {
                 sub<DestLen - halfw, SrcLen>(dest + halfw, z1);
             } else {
                 add<DestLen - halfw, SrcLen>(dest + halfw, z1);
@@ -603,7 +570,6 @@ public:
     {
         typedef typename int_representation<BitWidthD>::coeff_type int_type;
         constexpr auto Len1 = BitWidth1 / 8 / sizeof(int_type);
-        dest.flush();
         if (std::is_constant_evaluated()) {
             naive_mul::mul(dest, a, b);
         } else if constexpr (BitWidth1 == BitWidth2 && ((Len1 >> std::countr_zero(Len1)) <= karatsuba_threashold)) {
