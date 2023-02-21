@@ -307,25 +307,15 @@ public:
         typedef typename std::iterator_traits<Itr>::value_type int_type;
         int_type digit, c;
         std::fill_n(dest, DestLen, (int_type)0);
-        // for(auto i = 0; i < std::min(DestLen, 2 * MulLen); ++i) {
-        //     for(auto j = 0; j <= std::min(i, MulLen - 1); ++j) {
-        //         auto k = i - j;
-        //         // impl_base::plus((dest + i + 1), DestLen - i - 1, mul(digit, *(a + k), *(b + j)));
-        //         // impl_base::plus((dest + i), DestLen - i, digit);
-        //         c = mul(digit, *(a + k), *(b + j));
-        //         impl_base::plus(dest + i, DestLen - i, digit, c);
-        //     }
-        // }
-
-        // auto inner_loop_block = [dest, a, b, &c, &digit]<int I, int J>(std::integral_constant<int, I>, std::integral_constant<int, J>) {
+        // auto inner_loop_block = [dest, a, b, &c, &digit]<int I, int J>(std::integral_constant<int, I>, std::integral_constant<int, J>) mutable noexcept {
         //     (c = mul(digit, *(a + I), *(b + J)),
         //     impl_base::plus(dest + I + J, DestLen - I - J, digit, c));
         // };
-        // auto unroll_inner_loop = [&inner_loop_block]<int I, int ...J>(std::integral_constant<int, I>, std::integer_sequence<int, J...>) mutable {
-        //     inner_loop_block(std::integral_constant<int, I>{}, std::integral_constant<int, J>{}), ...;
+        // auto unroll_inner_loop = [&inner_loop_block]<int I, int ...J>(std::integral_constant<int, I>, std::integer_sequence<int, J...>) mutable noexcept {
+        //     (..., inner_loop_block(std::integral_constant<int, I>{}, std::integral_constant<int, J>{}));
         // };
-        // auto unroll_outer_loop = [&unroll_inner_loop]<int ...I>(std::integer_sequence<int, I...>) {
-        //     unroll_inner_loop(std::integral_constant<int, I>{}, std::make_integer_sequence<int, std::min(MulLen, 1 + DestLen - I)>{}), ...;
+        // auto unroll_outer_loop = [&unroll_inner_loop]<int ...I>(std::integer_sequence<int, I...>) mutable noexcept {
+        //     (..., unroll_inner_loop(std::integral_constant<int, I>{}, std::make_integer_sequence<int, std::min(MulLen, 1 + DestLen - I)>{}));
         // };
         // unroll_outer_loop(std::make_integer_sequence<int, std::min(MulLen, DestLen)>{});
 
